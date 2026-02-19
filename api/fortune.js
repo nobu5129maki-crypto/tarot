@@ -16,28 +16,44 @@ export default async function handler(req, res) {
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `あなたはプロのタロット占い師です。カード「${cardName}」に基づいた今日の運勢を、200文字程度で占ってください。` }] }]
-            })
-        });
+    const prompt = `あなたはプロのタロット占い師です。カード「${cardName}」に基づいた今日の運勢を、200文字程度で占ってください。`;
+    const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+    });
 
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // 利用可能なモデルを順に試す（地域・APIバージョンで利用可否が異なるため）
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-preview-05-20', 'gemini-2.5-flash-preview'];
+    let lastError = null;
 
-        // モデルエラーやブロック時はフォールバック
-        if (!text) {
-            const errMsg = data.error?.message || data.error?.status || `HTTP ${response.status}`;
-            console.error('Gemini API:', response.status, errMsg);
-            return res.status(response.ok ? 500 : response.status).json({ error: errMsg });
+    for (const model of models) {
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body
+            });
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (text) {
+                return res.status(200).json({ reading: text });
+            }
+
+            const errMsg = data.error?.message || '';
+            if (errMsg.includes('not found') || errMsg.includes('is not supported')) {
+                lastError = errMsg;
+                continue; // 次のモデルを試す
+            }
+            return res.status(response.ok ? 500 : response.status).json({ error: errMsg || `HTTP ${response.status}` });
+        } catch (e) {
+            lastError = e.message;
         }
-
-        // 3. 結果だけをブラウザに返す
-        res.status(200).json({ reading: text });
-    } catch (error) {
-        console.error('Fortune API error:', error);
-        res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
+
+    return res.status(500).json({ error: lastError || '利用可能なモデルが見つかりませんでした' });
+} catch (error) {
+    console.error('Fortune API error:', error);
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
+}
 }
