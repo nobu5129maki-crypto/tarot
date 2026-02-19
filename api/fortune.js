@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -29,14 +29,15 @@ export default async function handler(req, res) {
 
         // モデルエラーやブロック時はフォールバック
         if (!text) {
-            const errMsg = data.error?.message || 'モデルからの応答がありません';
-            console.error('Gemini API:', errMsg);
-            return res.status(500).json({ error: errMsg });
+            const errMsg = data.error?.message || data.error?.status || `HTTP ${response.status}`;
+            console.error('Gemini API:', response.status, errMsg);
+            return res.status(response.ok ? 500 : response.status).json({ error: errMsg });
         }
 
         // 3. 結果だけをブラウザに返す
         res.status(200).json({ reading: text });
     } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Fortune API error:', error);
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
 }

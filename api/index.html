@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lumina Tarot - 78 Origins</title>
+
+      <link rel="manifest" href="/manifest.json">
+
+    <meta name="theme-color" content="#1e293b">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="apple-touch-icon" href="/icon.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Serif JP', serif;
+            background-color: #faf9f6;
+            color: #2c2c2c;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Card Base Styles */
+        .card-container { perspective: 1000px; }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-inner.is-flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .card-back {
+            background-color: #1e293b;
+            border: 3px solid #c5a47e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-front {
+            background-color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* Fan Selection Styles */
+        .tarot-card-item {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1;
+        }
+        
+        /* Hover Effect for Desktop */
+        @media (hover: hover) {
+            .tarot-card-item:hover {
+                transform: translateY(-40px) scale(1.1) !important;
+                z-index: 50 !important;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            }
+        }
+
+        /* Selection/Focus State */
+        .tarot-card-item.is-focused {
+            transform: translateY(-80px) scale(1.2) !important;
+            z-index: 100 !important;
+            border-color: #f3e8ff;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        #selection-confirm-btn {
+            transition: opacity 0.4s, transform 0.4s;
+            transform: translateY(20px);
+        }
+        #selection-confirm-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 1.2s forwards; }
+
+        .logo-glow {
+            filter: drop-shadow(0 0 8px rgba(197, 164, 126, 0.4));
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="app" class="max-w-4xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-12">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-[#1e293b] rounded-lg flex items-center justify-center p-1 shadow-sm logo-glow">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                        <rect x="25" y="15" width="50" height="70" rx="4" stroke="#c5a47e" stroke-width="2.5" />
+                        <path d="M50 42L52 48L58 50L52 52L50 58L48 52L42 50L48 48L50 42Z" fill="#c5a47e" />
+                    </svg>
+                </div>
+                <h1 class="text-sm tracking-[0.4em] uppercase font-light text-stone-600">Lumina Tarot</h1>
+            </div>
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-stone-200 transition-colors duration-1000"></div>
+        </header>
+
+        <!-- Home View -->
+        <div id="home-view" class="text-center py-20 space-y-12 animate-fade-in">
+            <div class="space-y-6">
+                <div class="w-24 h-24 mx-auto bg-[#1e293b] rounded-3xl flex items-center justify-center p-4 shadow-2xl mb-8 logo-glow">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                        <rect x="25" y="15" width="50" height="70" rx="4" stroke="#c5a47e" stroke-width="2" />
+                        <path d="M50 42L52 48L58 50L52 52L50 58L48 52L42 50L48 48L50 42Z" fill="#c5a47e">
+                            <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-light tracking-widest leading-relaxed text-stone-800">
+                    万物を映す<br>七十八の鏡。
+                </h2>
+            </div>
+            <button onclick="startShuffle()" class="px-10 py-4 border border-stone-300 rounded-full text-[10px] tracking-[0.5em] uppercase hover:bg-stone-900 hover:text-white transition-all duration-500">
+                Shuffle the deck
+            </button>
+        </div>
+
+        <!-- Selection View -->
+        <div id="selection-view" class="hidden animate-fade-in">
+            <div class="text-center mb-12">
+                <p class="text-[10px] text-stone-400 tracking-[0.6em] uppercase">Choose your card</p>
+                <p class="text-[9px] text-stone-300 mt-2 italic">カードをタップして選び、確定ボタンを押してください</p>
+            </div>
+            
+            <div id="card-fan" class="relative h-[480px] overflow-x-auto no-scrollbar flex items-end px-[45vw] space-x-[-85px] pb-32">
+                <!-- Cards injected via JS -->
+            </div>
+
+            <div class="fixed bottom-12 left-0 w-full flex justify-center pointer-events-none px-6">
+                <button id="selection-confirm-btn" onclick="confirmSelection()" class="opacity-0 pointer-events-none bg-stone-900 text-white px-12 py-4 rounded-full text-[10px] tracking-[0.5em] uppercase shadow-2xl flex items-center gap-4">
+                    Read this card
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result View -->
+        <div id="result-view" class="hidden animate-fade-in pb-20">
+            <div class="flex flex-col items-center max-w-lg mx-auto">
+                <div id="final-card" class="card-container w-64 h-[400px] mb-12 cursor-pointer" onclick="flipCard()">
+                    <div class="card-inner" id="card-inner">
+                        <div class="card-face card-back">
+                            <div class="w-20 h-20 border border-[#c5a47e]/30 rounded-full flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" fill="none" class="w-10 h-10 opacity-60">
+                                    <path d="M50 20L52 48L80 50L52 52L50 80L48 52L20 50L48 48L50 20Z" fill="#c5a47e" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-face card-front">
+                            <img id="card-img" src="" alt="" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reading-content" class="hidden text-center space-y-8 w-full">
+                    <h3 id="card-name" class="text-xl font-light tracking-[0.3em] uppercase"></h3>
+                    <div class="bg-white p-8 border border-stone-100 rounded-lg shadow-sm">
+                        <p id="reading-text" class="text-sm leading-loose text-stone-600 font-light text-justify italic">
+                            運命の言葉を紡いでいます...
+                        </p>
+                    </div>
+                    <button onclick="location.reload()" class="text-[9px] tracking-[0.3em] uppercase font-bold underline underline-offset-8 decoration-stone-300">New Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tarot Deck Config
+        const MAJOR_NAMES = ["The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", "The Lovers", "The Chariot", "Justice", "The Hermit", "Wheel of Fortune", "Strength", "The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World"];
+        const SUITS = [{id:'wa', name:'Wands'}, {id:'cu', name:'Cups'}, {id:'sw', name:'Swords'}, {id:'pe', name:'Pentacles'}];
+        
+        let fullDeck = [];
+        MAJOR_NAMES.forEach((name, i) => {
+            fullDeck.push({ name, image: `https://sacred-texts.com/tarot/pkt/img/ar${i.toString().padStart(2, '0')}.jpg` });
+        });
+        SUITS.forEach(suit => {
+            for(let i=1; i<=10; i++) {
+                let code = i === 1 ? 'ac' : i.toString().padStart(2, '0');
+                fullDeck.push({ name: `${i} of ${suit.name}`, image: `https://sacred-texts.com/tarot/pkt/img/${suit.id}${code}.jpg` });
+            }
+            ['pa', 'kn', 'qu', 'ki'].forEach((p, idx) => {
+                const pNames = ["Page", "Knight", "Queen", "King"];
+                fullDeck.push({ name: `${pNames[idx]} of ${suit.name}`, image: `https://sacred-texts.com/tarot/pkt/img/${suit.id}${p}.jpg` });
+            });
+        });
+
+        let selectedPerformanceCard = null;
+        window.readingData = "";
+        window.isFetching = false;
+
+        function startShuffle() {
+            document.getElementById('home-view').classList.add('hidden');
+            const selectionView = document.getElementById('selection-view');
+            selectionView.classList.remove('hidden');
+            const container = document.getElementById('card-fan');
+            container.innerHTML = '';
+            
+            const shuffled = [...fullDeck].sort(() => Math.random() - 0.5);
+            shuffled.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = "tarot-card-item flex-shrink-0 w-40 h-64 bg-[#1e293b] rounded-lg border-2 border-[#c5a47e] cursor-pointer relative";
+                
+                const rotation = (i - 39) * 0.8;
+                div.style.transform = `rotate(${rotation}deg)`;
+                
+                div.innerHTML = `
+                    <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                        <div class="w-8 h-8 border border-[#c5a47e] rotate-45"></div>
+                    </div>
+                `;
+                
+                div.onclick = () => {
+                    // Remove focus from all cards
+                    document.querySelectorAll('.tarot-card-item').forEach(el => el.classList.remove('is-focused'));
+                    
+                    // Add focus to clicked card
+                    div.classList.add('is-focused');
+                    selectedPerformanceCard = card;
+                    
+                    // Show confirm button
+                    document.getElementById('selection-confirm-btn').classList.add('visible');
+                    
+                    // Center the card in view
+                    div.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                };
+                
+                container.appendChild(div);
+            });
+            
+            container.scrollLeft = container.scrollWidth / 2 - window.innerWidth / 2;
+        }
+
+        async function confirmSelection() {
+            if (!selectedPerformanceCard) return;
+
+            document.getElementById('selection-view').classList.add('hidden');
+            document.getElementById('result-view').classList.remove('hidden');
+            document.getElementById('card-img').src = selectedPerformanceCard.image;
+            document.getElementById('card-name').innerText = selectedPerformanceCard.name;
+            
+            window.isFetching = true;
+            document.getElementById('status-dot').classList.replace('bg-stone-200', 'bg-amber-400');
+
+            try {
+                const res = await fetch('/api/fortune', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cardName: selectedPerformanceCard.name })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    window.readingData = data.reading;
+                    document.getElementById('status-dot').classList.replace('bg-amber-400', 'bg-emerald-400');
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    const msg = errData.error || `エラー ${res.status}`;
+                    throw new Error(msg);
+                }
+            } catch (e) {
+                const fallback = "星々の瞬きから意味を読み取ってください。直感があなたに語りかける言葉が、最善の導きとなります。";
+                let errMsg = e.message;
+                if (errMsg === 'API key not configured') errMsg = 'VercelにGEMINI_API_KEYが設定されていません。Settings → Environment Variables で追加してください。';
+                else if (errMsg === 'Failed to fetch') errMsg = null;
+                else if (errMsg && (errMsg.includes('API key') || errMsg.includes('403') || errMsg.includes('PERMISSION'))) errMsg = 'APIキーが無効か制限されています。Google AI Studioで新しいキーを作成し、制限を「なし」にしてください。';
+                window.readingData = errMsg ? `※ ${errMsg}` : fallback;
+                document.getElementById('status-dot').classList.replace('bg-amber-400', 'bg-red-400');
+            } finally {
+                window.isFetching = false;
+                if (!document.getElementById('reading-content').classList.contains('hidden')) {
+                    document.getElementById('reading-text').innerText = window.readingData;
+                }
+            }
+        }
+
+        function flipCard() {
+            const inner = document.getElementById('card-inner');
+            if (!inner.classList.contains('is-flipped')) {
+                inner.classList.add('is-flipped');
+                setTimeout(() => {
+                    document.getElementById('reading-content').classList.remove('hidden');
+                    document.getElementById('reading-text').innerText = window.isFetching ? "リーディングを読み解いています..." : window.readingData;
+                }, 800);
+            }
+        }
+    </script>
+</body>
+</html>
