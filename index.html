@@ -281,10 +281,17 @@
                     window.readingData = data.reading;
                     document.getElementById('status-dot').classList.replace('bg-amber-400', 'bg-emerald-400');
                 } else {
-                    throw new Error();
+                    const errData = await res.json().catch(() => ({}));
+                    const msg = errData.error || `エラー ${res.status}`;
+                    throw new Error(msg);
                 }
             } catch (e) {
-                window.readingData = "星々の瞬きから意味を読み取ってください。直感があなたに語りかける言葉が、最善の導きとなります。";
+                const fallback = "星々の瞬きから意味を読み取ってください。直感があなたに語りかける言葉が、最善の導きとなります。";
+                let errMsg = e.message;
+                if (errMsg === 'API key not configured') errMsg = 'VercelにGEMINI_API_KEYが設定されていません。Settings → Environment Variables で追加してください。';
+                else if (errMsg === 'Failed to fetch') errMsg = null;
+                else if (errMsg && (errMsg.includes('API key') || errMsg.includes('403') || errMsg.includes('PERMISSION'))) errMsg = 'APIキーが無効か制限されています。Google AI Studioで新しいキーを作成し、制限を「なし」にしてください。';
+                window.readingData = errMsg ? `※ ${errMsg}` : fallback;
                 document.getElementById('status-dot').classList.replace('bg-amber-400', 'bg-red-400');
             } finally {
                 window.isFetching = false;
