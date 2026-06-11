@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     });
 
     // 利用可能なモデルを順に試す（地域・APIバージョンで利用可否が異なるため）
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-preview-05-20', 'gemini-2.5-flash-preview'];
+    const models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
     let lastError = null;
 
     for (const model of models) {
